@@ -57,6 +57,22 @@ export default {
           border: "hsl(var(--sidebar-border))",
           ring: "hsl(var(--sidebar-ring))",
         },
+        status: {
+          listed: "hsl(var(--status-listed))",
+          "listed-foreground": "hsl(var(--status-listed-foreground))",
+          ongoing: "hsl(var(--status-ongoing))",
+          "ongoing-foreground": "hsl(var(--status-ongoing-foreground))",
+          solved: "hsl(var(--status-solved))",
+          "solved-foreground": "hsl(var(--status-solved-foreground))",
+        },
+        priority: {
+          low: "hsl(var(--priority-low))",
+          "low-foreground": "hsl(var(--priority-low-foreground))",
+          medium: "hsl(var(--priority-medium))",
+          "medium-foreground": "hsl(var(--priority-medium-foreground))",
+          high: "hsl(var(--priority-high))",
+          "high-foreground": "hsl(var(--priority-high-foreground))",
+        },
       },
       borderRadius: {
         lg: "var(--radius)",
