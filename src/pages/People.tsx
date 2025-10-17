@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api";
+import { getUsers as getLocalUsers } from "@/lib/localDb";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -9,7 +10,14 @@ import { AddTeamMemberDialog } from "@/components/AddTeamMemberDialog";
 export const People = () => {
   const { data: users = [], isLoading } = useQuery({
     queryKey: ["users"],
-    queryFn: () => api.users.list(),
+    queryFn: async () => {
+      try {
+        return await api.users.list();
+      } catch (err) {
+        console.warn("Remote users fetch failed, falling back to local DB", err);
+        return await getLocalUsers();
+      }
+    },
   });
 
   const departmentColors: Record<string, string> = {

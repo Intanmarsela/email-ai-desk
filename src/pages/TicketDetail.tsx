@@ -30,7 +30,15 @@ export const TicketDetail = () => {
 
   const { data: ticket } = useQuery({
     queryKey: ["ticket", id],
-    queryFn: () => api.tickets.get(id!),
+    queryFn: async () => {
+      try {
+        return await api.tickets.get(id!);
+      } catch (e) {
+        console.warn('Remote ticket fetch failed, trying local DB', e);
+        const { getTicket } = await import('@/lib/localDb');
+        return await getTicket(id!);
+      }
+    },
     enabled: !!id,
   });
 

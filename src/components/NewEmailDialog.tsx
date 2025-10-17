@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Mail } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { api } from "@/lib/api";
+import { addTicket as addLocalTicket } from "@/lib/localDb";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 export const NewEmailDialog = () => {
@@ -20,8 +21,30 @@ export const NewEmailDialog = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const ingestMutation = useMutation({
-    mutationFn: api.emails.ingest,
+  const ingestMutation = useMutation<any, any, typeof formData>({
+    mutationFn: async (data) => {
+      try {
+        return await api.emails.ingest(data as any);
+      } catch (err) {
+        console.warn("Remote ingest failed, saving ticket locally", err);
+        const local = await addLocalTicket({
+          customer_name: data.customer_name,
+          customer_email: data.customer_email,
+          subject: data.subject,
+          body: data.body,
+          _local: true,
+        } as any);
+        // show a local-save toast and invalidate tickets so UI refreshes
+        toast({
+          title: "Saved locally",
+          description: "Ticket saved locally (offline). It will be synced when backend is available.",
+        });
+  // recompute user stats (workload + solved_count)
+  try { const { recomputeUserStats } = await import('@/lib/localDb'); await recomputeUserStats(); } catch(e) { console.warn('recomputeUserStats failed', e); }
+        queryClient.invalidateQueries({ queryKey: ["tickets"] });
+        return local;
+      }
+    },
     onSuccess: () => {
       toast({
         title: "Email ingested",

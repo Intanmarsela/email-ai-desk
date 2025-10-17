@@ -3,7 +3,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { api } from "@/lib/api";
+import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -32,6 +32,7 @@ import {
 } from "@/components/ui/select";
 import { UserPlus } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
+import { addUser as addLocalUser } from "@/lib/localDb";
 
 const formSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters").max(100),
@@ -55,14 +56,35 @@ export const AddTeamMemberDialog = () => {
   });
 
   const mutation = useMutation({
-    mutationFn: (data: z.infer<typeof formSchema>) => {
+    mutationFn: async (data: z.infer<typeof formSchema>) => {
       const skillsArray = data.skills.split(",").map((s) => s.trim()).filter(Boolean);
-      return api.users.create({
-        name: data.name,
-        email: data.email,
-        department: data.department,
-        skills: skillsArray,
-      });
+      try {
+        const { data: inserted, error } = await supabase
+          .from("users")
+          .insert({
+            name: data.name,
+            email: data.email,
+            department: data.department,
+            skills: skillsArray,
+          })
+          .select()
+          .single();
+
+        if (error) throw error;
+        return inserted;
+      } catch (err) {
+        // Fallback: save locally and return the local record
+        console.warn("Supabase insert failed, falling back to local DB", err);
+        const local = await addLocalUser({
+          name: data.name,
+          email: data.email,
+          department: data.department,
+          skills: skillsArray,
+        });
+        // attach a local-only flag so UI can show appropriate message if needed
+        (local as any)._local = true;
+        return local;
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["users"] });
@@ -73,10 +95,14 @@ export const AddTeamMemberDialog = () => {
       setOpen(false);
       form.reset();
     },
-    onError: () => {
+    onError: (err: any) => {
+      // Log the error so you can inspect details in the browser console
+      // and include the message in the toast to surface Supabase errors.
+      console.error("AddTeamMemberDialog error:", err);
+      const message = err?.message || err?.error || "Failed to add team member. Please try again.";
       toast({
         title: "Error",
-        description: "Failed to add team member. Please try again.",
+        description: message,
         variant: "destructive",
       });
     },
