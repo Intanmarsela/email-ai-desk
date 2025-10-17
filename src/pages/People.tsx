@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Users, TrendingUp } from "lucide-react";
+import { AddTeamMemberDialog } from "@/components/AddTeamMemberDialog";
 
 export const People = () => {
   const { data: users = [], isLoading } = useQuery({
@@ -20,12 +21,15 @@ export const People = () => {
   return (
     <div className="flex flex-col h-screen">
       <div className="border-b bg-card p-4">
-        <div className="flex items-center gap-3">
-          <Users className="h-8 w-8 text-primary" />
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight">People</h1>
-            <p className="text-sm text-muted-foreground">Manage team members and their workloads</p>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <Users className="h-8 w-8 text-primary" />
+            <div>
+              <h1 className="text-2xl font-bold tracking-tight">People</h1>
+              <p className="text-sm text-muted-foreground">Manage team members and their workloads</p>
+            </div>
           </div>
+          <AddTeamMemberDialog />
         </div>
       </div>
 
